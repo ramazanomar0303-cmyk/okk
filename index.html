@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduAI — ЖИ негізіндегі білімді бағалау платформасы</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --indigo:#5B5FED;--indigo-light:#EEEFFE;--indigo-dark:#4245C7;
+  --cyan:#0DAFCE;--cyan-light:#E8FAFD;
+  --emerald:#10B981;--emerald-light:#ECFDF5;
+  --amber:#F59E0B;--amber-light:#FFFBEB;
+  --rose:#F43F5E;--rose-light:#FFF1F2;
+  --bg:#F7F7FC;--surface:#FFFFFF;--surface2:#F0F0F8;--surface3:#E8E8F4;
+  --text:#0F0F23;--text2:#5A5A78;--text3:#9898B8;
+  --border:#E4E4F0;--border2:#D0D0E8;
+  --radius:14px;--radius-sm:9px;--radius-lg:20px;
+  --shadow:0 2px 8px rgba(91,95,237,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 8px 32px rgba(91,95,237,.12),0 2px 8px rgba(0,0,0,.06);
+  --shadow-lg:0 20px 60px rgba(91,95,237,.18);
+}
+body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh;}
+.app-shell{display:flex;min-height:100vh;}
+.sidebar{width:248px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;left:0;top:0;height:100vh;z-index:50;transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.sidebar-hidden .sidebar{transform:translateX(-248px);}
+.main-content{flex:1;margin-left:248px;min-height:100vh;transition:margin .3s cubic-bezier(.4,0,.2,1);}
+.sidebar-hidden .main-content{margin-left:0;}
+.logo-area{padding:26px 22px 22px;border-bottom:1px solid var(--border);}
+.logo{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;letter-spacing:-1px;background:linear-gradient(135deg,var(--indigo),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-tag{font-size:10px;color:var(--text3);margin-top:3px;font-weight:500;letter-spacing:.04em;}
+.nav-section{padding:14px 12px 0;}
+.nav-label{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;padding:0 10px;margin-bottom:6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);font-size:13px;font-weight:500;margin-bottom:2px;transition:all .18s;border:none;background:none;width:100%;text-align:left;position:relative;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--indigo-light);color:var(--indigo);font-weight:600;}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--indigo);border-radius:0 3px 3px 0;}
+.nav-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.nav-item.active .nav-icon{background:rgba(91,95,237,.12);}
+.sidebar-footer{margin-top:auto;padding:16px 12px;}
+.user-chip{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--radius-sm);background:var(--surface2);cursor:pointer;transition:background .15s;}
+.user-chip:hover{background:var(--surface3);}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--indigo),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.avatar.sm{width:28px;height:28px;font-size:10px;}
+.user-name{font-size:13px;font-weight:600;color:var(--text);}
+.user-role{font-size:11px;color:var(--text3);}
+.topbar{background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 28px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+.topbar-title{font-size:16px;font-weight:700;color:var(--text);}
+.topbar-actions{display:flex;align-items:center;gap:10px;}
+.page{display:none;padding:28px;animation:fadeUp .3s ease both;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:box-shadow .2s;}
+.card-sm{padding:16px;}
+.card-lg{padding:28px;}
+.card:hover{box-shadow:var(--shadow);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;}
+.metric-label{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:10px;letter-spacing:.03em;}
+.metric-value{font-size:28px;font-weight:800;color:var(--text);line-height:1;font-family:'JetBrains Mono',monospace;}
+.metric-sub{font-size:11px;color:var(--text3);margin-top:7px;font-weight:500;}
+.metric-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;float:right;margin-top:-4px;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .18s;font-family:'Sora',sans-serif;white-space:nowrap;line-height:1.4;}
+.btn svg{width:15px;height:15px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.btn-primary{background:var(--indigo);color:#fff;box-shadow:0 2px 10px rgba(91,95,237,.3);}
+.btn-primary:hover{background:var(--indigo-dark);box-shadow:0 4px 16px rgba(91,95,237,.4);transform:translateY(-1px);}
+.btn-outline{background:transparent;color:var(--text);border:1.5px solid var(--border2);}
+.btn-outline:hover{background:var(--surface2);border-color:var(--indigo);color:var(--indigo);}
+.btn-ghost{background:transparent;color:var(--text2);padding:8px 12px;}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-sm{padding:7px 14px;font-size:12px;}
+.btn-lg{padding:13px 26px;font-size:15px;}
+.btn-success{background:var(--emerald);color:#fff;box-shadow:0 2px 10px rgba(16,185,129,.25);}
+.btn-danger{background:var(--rose);color:#fff;}
+.btn-cyan{background:var(--cyan);color:#fff;box-shadow:0 2px 10px rgba(13,175,206,.25);}
+.btn-amber{background:var(--amber);color:#fff;box-shadow:0 2px 10px rgba(245,158,11,.25);}
+.btn-emerald{background:var(--emerald);color:#fff;}
+.btn-purple{background:#8B5CF6;color:#fff;}
+.btn-rose{background:var(--rose);color:#fff;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.02em;}
+.badge-indigo{background:var(--indigo-light);color:var(--indigo);}
+.badge-green{background:var(--emerald-light);color:var(--emerald);}
+.badge-amber{background:var(--amber-light);color:var(--amber);}
+.badge-red{background:var(--rose-light);color:var(--rose);}
+.badge-cyan{background:var(--cyan-light);color:var(--cyan);}
+.badge-gray{background:var(--surface2);color:var(--text2);}
+.progress{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.progress-bar{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.progress.sm{height:5px;}
+.divider{height:1px;background:var(--border);margin:16px 0;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.section-title{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.01em;}
+.ai-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#EEEFFE,#E0F9FD);border:1px solid #C5C8FB;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--indigo);}
+.ai-dot{width:7px;height:7px;border-radius:50%;background:var(--indigo);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.7);}}
+.icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;flex-shrink:0;}
+.icon svg{width:100%;height:100%;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.login-screen{min-height:100vh;background:linear-gradient(145deg,#EEF0FD 0%,#F0F8FF 40%,#F0FDF8 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.login-screen::before{content:'';position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(91,95,237,.08) 0%,transparent 70%);top:-100px;right:-100px;pointer-events:none;}
+.login-screen::after{content:'';position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(13,175,206,.07) 0%,transparent 70%);bottom:-50px;left:-50px;pointer-events:none;}
+.login-box{width:420px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:40px;box-shadow:var(--shadow-md);position:relative;z-index:1;}
+.login-logo{font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:700;letter-spacing:-2px;background:linear-gradient(135deg,var(--indigo),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;margin-bottom:6px;}
+.login-sub{text-align:center;color:var(--text2);font-size:13px;margin-bottom:28px;font-weight:400;}
+.tab-row{display:flex;background:var(--surface2);border-radius:var(--radius-sm);padding:4px;margin-bottom:24px;gap:4px;}
+.tab{flex:1;padding:9px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);border-radius:7px;transition:all .18s;}
+.tab.active{background:var(--surface);color:var(--indigo);box-shadow:var(--shadow);}
+.form-group{margin-bottom:16px;}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;letter-spacing:.02em;}
+.form-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'Sora',sans-serif;color:var(--text);background:var(--surface);outline:none;transition:border .15s;}
+.form-input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(91,95,237,.08);}
+.form-select{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'Sora',sans-serif;color:var(--text);background:var(--surface);outline:none;-webkit-appearance:none;}
+.form-hint{font-size:11px;color:var(--text3);text-align:center;margin-top:12px;font-weight:500;}
+.test-header{background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:16px 28px;position:sticky;top:62px;z-index:30;}
+.question-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;margin-bottom:16px;}
+.question-text{font-size:18px;font-weight:600;color:var(--text);line-height:1.65;margin-bottom:26px;letter-spacing:-.02em;}
+.option{display:flex;align-items:center;gap:14px;padding:15px 18px;border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;margin-bottom:10px;transition:all .18s;font-size:14px;color:var(--text);font-weight:500;background:var(--surface);}
+.option:hover{border-color:var(--indigo);background:var(--indigo-light);color:var(--indigo);}
+.option.selected{border-color:var(--indigo);background:var(--indigo-light);color:var(--indigo);font-weight:600;}
+.option.correct{border-color:var(--emerald);background:var(--emerald-light);color:var(--emerald);font-weight:600;}
+.option.wrong{border-color:var(--rose);background:var(--rose-light);color:var(--rose);font-weight:600;}
+.option-key{width:32px;height:32px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+.answer-explain{padding:16px 18px;border-radius:var(--radius-sm);font-size:13px;margin-top:14px;line-height:1.6;display:none;}
+.answer-explain.show{display:block;}
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;}
+.msg{display:flex;gap:10px;align-items:flex-start;animation:msgIn .22s ease;}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.msg.user{flex-direction:row-reverse;}
+.msg-bubble{max-width:76%;padding:13px 17px;border-radius:16px;font-size:13px;line-height:1.65;font-weight:400;}
+.msg.ai .msg-bubble{background:var(--surface2);color:var(--text);border-bottom-left-radius:5px;}
+.msg.user .msg-bubble{background:linear-gradient(135deg,var(--indigo),#7C7FF5);color:#fff;border-bottom-right-radius:5px;box-shadow:0 4px 14px rgba(91,95,237,.25);}
+.msg.ai .avatar{background:linear-gradient(135deg,var(--indigo),var(--cyan));}
+.chat-input-area{border-top:1px solid var(--border);padding:16px 18px;background:var(--surface);display:flex;gap:10px;align-items:flex-end;}
+.chat-input{flex:1;padding:12px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'Sora',sans-serif;resize:none;outline:none;background:var(--surface2);color:var(--text);max-height:120px;transition:border .15s,background .15s;}
+.chat-input:focus{border-color:var(--indigo);background:var(--surface);box-shadow:0 0 0 3px rgba(91,95,237,.08);}
+.typing-indicator{display:flex;gap:4px;align-items:center;padding:13px 17px;background:var(--surface2);border-radius:16px;border-bottom-left-radius:5px;width:fit-content;}
+.typing-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);animation:tdot 1.2s infinite;}
+.typing-dot:nth-child(2){animation-delay:.2s;}
+.typing-dot:nth-child(3){animation-delay:.4s;}
+@keyframes tdot{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+.score-ring{position:relative;width:100px;height:100px;flex-shrink:0;}
+.score-ring svg{transform:rotate(-90deg);}
+.score-ring .score-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:800;color:var(--indigo);font-family:'JetBrains Mono',monospace;}
+.feedback-item{padding:15px 16px;border-radius:var(--radius-sm);margin-bottom:10px;border-left:3px solid;}
+.feedback-strength{background:var(--emerald-light);border-color:var(--emerald);}
+.feedback-weakness{background:var(--amber-light);border-color:var(--amber);}
+.feedback-tip{background:var(--indigo-light);border-color:var(--indigo);}
+.feedback-item .fi-title{font-size:13px;font-weight:700;margin-bottom:5px;}
+.feedback-item .fi-body{font-size:12px;color:var(--text2);line-height:1.55;}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:120px;margin-top:10px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.bar-col .bar{width:100%;border-radius:6px 6px 0 0;min-height:8px;transition:height .5s cubic-bezier(.4,0,.2,1);}
+.bar-col .bar-lbl{font-size:10px;color:var(--text3);font-weight:600;}
+.bar-col .bar-val{font-size:10px;font-weight:700;color:var(--text2);font-family:'JetBrains Mono',monospace;}
+.skill-row{display:flex;align-items:center;gap:12px;margin-bottom:13px;}
+.skill-name{font-size:12px;color:var(--text2);width:110px;flex-shrink:0;font-weight:500;display:flex;align-items:center;gap:6px;}
+.skill-pct{font-size:12px;font-weight:700;color:var(--text);width:34px;text-align:right;flex-shrink:0;font-family:'JetBrains Mono',monospace;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:13px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.4,0,.2,1);display:flex;align-items:center;gap:9px;box-shadow:var(--shadow-md);}
+.toast.show{transform:translateY(0);opacity:1;}
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--text3);}
+@media(max-width:900px){
+  .sidebar{transform:translateX(-248px);}
+  .main-content{margin-left:0;}
+  .g4{grid-template-columns:1fr 1fr;}
+  .g3{grid-template-columns:1fr 1fr;}
+  .g2{grid-template-columns:1fr;}
+}
+.task-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid;}
+.task-item:hover{background:var(--surface3);}
+.subject-card{cursor:pointer;transition:all .2s;}
+.subject-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--accent-color)!important;}
+.achievement{text-align:center;padding:18px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);transition:all .2s;}
+.achievement:hover{border-color:var(--indigo);background:var(--indigo-light);}
+.achievement.locked{opacity:.4;}
+
+/* Feedback no-result state */
+.feedback-empty{text-align:center;padding:48px 24px;color:var(--text2);}
+.feedback-empty .fe-icon{font-size:48px;margin-bottom:16px;}
+.feedback-empty p{font-size:13px;line-height:1.7;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-box">
+    <div class="login-logo">EduAI</div>
+    <div class="login-sub">ЖИ негізіндегі білімді бағалау және кері байланыс</div>
+    <div class="tab-row">
+      <div class="tab active" onclick="switchAuthTab('login',this)">Кіру</div>
+      <div class="tab" onclick="switchAuthTab('register',this)">Тіркелу</div>
+    </div>
+    <div id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Электрондық пошта</label>
+        <input class="form-input" type="email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Құпия сөз</label>
+        <input class="form-input" type="password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:4px;" onclick="doLogin()">
+        <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Жүйеге кіру
+      </button>
+      <p class="form-hint">Демо үшін: кез келген мәліметті енгізіңіз</p>
+    </div>
+    <div id="registerForm" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Толық аты-жөні</label>
+        <input class="form-input" type="text" placeholder="Айгерім Жаксыбек">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Электрондық пошта</label>
+        <input class="form-input" type="email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Сынып / Курс</label>
+        <select class="form-select">
+          <option>8-сынып</option><option>9-сынып</option><option>10-сынып</option><option>11-сынып</option><option>1-курс</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Роль</label>
+        <select class="form-select"><option>Оқушы</option><option>Мұғалім</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Құпия сөз</label>
+        <input class="form-input" type="password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" onclick="doLogin()">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Тіркелу
+      </button>
+      <p class="form-hint">Демо үшін: кез келген мәліметті енгізіңіз</p>
+    </div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div class="app-shell" id="appShell" style="display:none;">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo-area">
+      <div class="logo">EduAI</div>
+      <div class="logo-tag">ЖИ негізіндегі білімді бағалау</div>
+    </div>
+    <div class="nav-section" style="margin-top:14px;">
+      <div class="nav-label">Негізгі</div>
+      <button class="nav-item active" onclick="goPage('dashboard')" id="nav-dashboard">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </span>
+        Басты бет
+      </button>
+      <button class="nav-item" onclick="goPage('test')" id="nav-test">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </span>
+        Тест тапсыру
+      </button>
+      <button class="nav-item" onclick="goPage('ai')" id="nav-ai">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>
+        </span>
+        AI Бағалау
+      </button>
+    </div>
+    <div class="nav-section" style="margin-top:10px;">
+      <div class="nav-label">Нәтижелер</div>
+      <button class="nav-item" onclick="goPage('feedback')" id="nav-feedback">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
+        Кері байланыс
+      </button>
+      <button class="nav-item" onclick="goPage('stats')" id="nav-stats">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </span>
+        Статистика
+      </button>
+    </div>
+    <div class="nav-section" style="margin-top:10px;">
+      <div class="nav-label">Жүйе</div>
+      <button class="nav-item" onclick="showToast('Параметрлер жасалуда...')">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        </span>
+        Параметрлер
+      </button>
+      <button class="nav-item" onclick="logout()">
+        <span class="nav-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </span>
+        Шығу
+      </button>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar">АЖ</div>
+        <div>
+          <div class="user-name">Айгерім Жаксыбек</div>
+          <div class="user-role">Оқушы · 8-сынып</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <button class="btn btn-ghost" onclick="toggleSidebar()" style="padding:8px;border-radius:8px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="topbar-title" id="topbarTitle">Басты бет</div>
+      </div>
+      <div class="topbar-actions">
+        <span class="ai-badge"><span class="ai-dot"></span>AI белсенді</span>
+        <button class="btn btn-ghost" style="padding:8px;border-radius:8px;" onclick="showToast('Хабарлама жоқ')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <div class="avatar sm">АЖ</div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div style="margin-bottom:26px;">
+        <h2 style="font-size:22px;font-weight:800;letter-spacing:-.03em;">Қош келдіңіз, Айгерім! 👋</h2>
+        <p style="color:var(--text2);margin-top:5px;font-size:13px;">Бүгінгі оқу мақсатыңызды орындаңыз</p>
+      </div>
+      <div class="g4" style="margin-bottom:22px;">
+        <div class="metric">
+          <div class="metric-icon" style="background:var(--indigo-light);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          </div>
+          <div class="metric-label">Орташа балл</div>
+          <div class="metric-value" style="color:var(--indigo);" id="dash-avg">—</div>
+          <div class="metric-sub" id="dash-avg-sub">Тест тапсырыңыз</div>
+        </div>
+        <div class="metric">
+          <div class="metric-icon" style="background:var(--cyan-light);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <div class="metric-label">Тапсырылған тесттер</div>
+          <div class="metric-value" id="dash-total">0</div>
+          <div class="metric-sub" id="dash-total-sub">Бұл аптада 0 тест</div>
+        </div>
+        <div class="metric">
+          <div class="metric-icon" style="background:var(--amber-light);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          </div>
+          <div class="metric-label">Оқу серия</div>
+          <div class="metric-value" style="color:var(--amber);" id="dash-streak">🔥 0 күн</div>
+          <div class="metric-sub">Бүгін бастаңыз!</div>
+        </div>
+        <div class="metric">
+          <div class="metric-icon" style="background:var(--emerald-light);">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div class="metric-label">AI ұпайлары</div>
+          <div class="metric-value" style="color:var(--emerald);" id="dash-points">0</div>
+          <div class="metric-sub">Тест тапсырып ұпай жинаңыз</div>
+        </div>
+      </div>
+
+      <div class="g2" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="section-header">
+            <span class="section-title">Жедел тапсырмалар</span>
+            <span class="badge badge-red">3 күтіп тұр</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="task-item" style="border-color:var(--indigo);">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;border-radius:9px;background:var(--indigo-light);display:flex;align-items:center;justify-content:center;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+                </div>
+                <div><div style="font-size:13px;font-weight:600;">Алгебра — Квадрат теңдеулер</div><div style="font-size:11px;color:var(--text3);">15 сұрақ · 20 мин · Бүгін</div></div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="goPage('test')">Бастау</button>
+            </div>
+            <div class="task-item" style="border-color:var(--cyan);">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;border-radius:9px;background:var(--cyan-light);display:flex;align-items:center;justify-content:center;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                </div>
+                <div><div style="font-size:13px;font-weight:600;">Физика — Механика негіздері</div><div style="font-size:11px;color:var(--text3);">10 сұрақ · 15 мин · Ертең</div></div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="goPage('test')">Бастау</button>
+            </div>
+            <div class="task-item" style="border-color:var(--emerald);">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:36px;height:36px;border-radius:9px;background:var(--emerald-light);display:flex;align-items:center;justify-content:center;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                </div>
+                <div><div style="font-size:13px;font-weight:600;">Тарих — Орта ғасыр</div><div style="font-size:11px;color:var(--text3);">12 сұрақ · 18 мин · Бейсенбі</div></div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="goPage('test')">Бастау</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="section-header"><span class="section-title">Пән бойынша прогресс</span></div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:var(--indigo);font-size:12px;">∑</span> Математика</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="prog-math" style="width:0%;background:var(--indigo);"></div></div>
+            <span class="skill-pct" id="pct-math">0%</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:var(--cyan);font-size:12px;">⚛</span> Физика</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="prog-physics" style="width:0%;background:var(--cyan);"></div></div>
+            <span class="skill-pct" id="pct-physics">0%</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:var(--amber);font-size:12px;">⚗</span> Химия</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="prog-chemistry" style="width:0%;background:var(--amber);"></div></div>
+            <span class="skill-pct" id="pct-chemistry">0%</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:var(--emerald);font-size:12px;">🌐</span> Тарих</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="prog-history" style="width:0%;background:var(--emerald);"></div></div>
+            <span class="skill-pct" id="pct-history">0%</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:#8B5CF6;font-size:12px;">📖</span> Қазақ тілі</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="prog-kazakh" style="width:0%;background:#8B5CF6;"></div></div>
+            <span class="skill-pct" id="pct-kazakh">0%</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:var(--rose);font-size:12px;">🧬</span> Биология</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="prog-biology" style="width:0%;background:var(--rose);"></div></div>
+            <span class="skill-pct" id="pct-biology">0%</span>
+          </div>
+          <div style="margin-top:14px;padding:12px;background:var(--indigo-light);border-radius:var(--radius-sm);font-size:12px;color:var(--indigo);font-weight:500;text-align:center;">
+            Тест тапсырған сайын прогресс жаңартылады ↑
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <span class="section-title">AI Ұсыныстары</span>
+          <span class="ai-badge"><span class="ai-dot"></span>AI жаңартты</span>
+        </div>
+        <div class="g3">
+          <div style="padding:16px;border:1.5px solid #C5C8FB;border-radius:var(--radius-sm);background:var(--indigo-light);">
+            <div style="width:34px;height:34px;background:rgba(91,95,237,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <p style="font-size:13px;font-weight:700;color:var(--indigo);margin-bottom:5px;">Квадрат теңдеулер</p>
+            <p style="font-size:12px;color:#4245C7;line-height:1.55;">Дискриминант формуласын (D=b²−4ac) қайталауды ұсынамын. Практика тест тапсырыңыз!</p>
+          </div>
+          <div style="padding:16px;border:1.5px solid #A7F3D0;border-radius:var(--radius-sm);background:var(--emerald-light);">
+            <div style="width:34px;height:34px;background:rgba(16,185,129,.12);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <p style="font-size:13px;font-weight:700;color:var(--emerald);margin-bottom:5px;">Тарих бойынша</p>
+            <p style="font-size:12px;color:#065F46;line-height:1.55;">Тарих пәнінен тест тапсырып, өз деңгейіңізді анықтаңыз!</p>
+          </div>
+          <div style="padding:16px;border:1.5px solid #FDE68A;border-radius:var(--radius-sm);background:var(--amber-light);">
+            <div style="width:34px;height:34px;background:rgba(245,158,11,.12);border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <p style="font-size:13px;font-weight:700;color:var(--amber);margin-bottom:5px;">Химияны нығайтыңыз</p>
+            <p style="font-size:12px;color:#92400E;line-height:1.55;">Реакция теңдеулерін теңестіру бойынша практика жасаңыз. Арнайы тест бар.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEST PAGE -->
+    <div class="page" id="page-test">
+      <div class="test-header" style="display:none;" id="testRunHeader">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="btn btn-outline btn-sm" onclick="exitTest()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Шығу
+            </button>
+            <span class="badge badge-indigo" id="testSubjectBadge">Математика</span>
+            <span style="font-size:14px;font-weight:600;color:var(--text);" id="testSubjectName">Алгебра: Квадрат теңдеулер</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="background:var(--surface2);padding:8px 16px;border-radius:var(--radius-sm);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--text);" id="timerDisplay">20:00</div>
+            <div style="font-size:13px;color:var(--text2);font-weight:500;">Сұрақ <span id="qNum" style="font-weight:700;color:var(--text);">1</span>/<span id="qTotal">10</span></div>
+          </div>
+        </div>
+        <div class="progress"><div class="progress-bar" id="testProgressBar" style="width:10%;background:linear-gradient(90deg,var(--indigo),var(--cyan));"></div></div>
+      </div>
+
+      <!-- Test selection -->
+      <div id="testSelectScreen">
+        <div style="margin-bottom:26px;">
+          <h2 style="font-size:22px;font-weight:800;letter-spacing:-.03em;">Тест тандаңыз</h2>
+          <p style="color:var(--text2);margin-top:5px;font-size:13px;">Пән мен деңгейді таңдап, тесті бастаңыз</p>
+        </div>
+        <div class="g3">
+          <div class="card subject-card" style="--accent-color:var(--indigo);" onclick="startTest('math')">
+            <div style="width:48px;height:48px;border-radius:12px;background:var(--indigo-light);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>
+            </div>
+            <h3 style="font-size:15px;font-weight:700;margin-bottom:5px;">Математика</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">Алгебра, геометрия, статистика</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;"><span class="badge badge-indigo">Квадрат теңдеулер</span><span class="badge badge-gray">Логарифм</span></div>
+            <button class="btn btn-primary btn-sm" style="width:100%;justify-content:center;" onclick="event.stopPropagation();startTest('math')">Тест бастау</button>
+          </div>
+          <div class="card subject-card" style="--accent-color:var(--cyan);" onclick="startTest('physics')">
+            <div style="width:48px;height:48px;border-radius:12px;background:var(--cyan-light);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            </div>
+            <h3 style="font-size:15px;font-weight:700;margin-bottom:5px;">Физика</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">Механика, электр, оптика</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;"><span class="badge badge-cyan">Механика</span><span class="badge badge-gray">Электр</span></div>
+            <button class="btn btn-cyan btn-sm" style="width:100%;justify-content:center;" onclick="event.stopPropagation();startTest('physics')">Тест бастау</button>
+          </div>
+          <div class="card subject-card" style="--accent-color:var(--emerald);" onclick="startTest('history')">
+            <div style="width:48px;height:48px;border-radius:12px;background:var(--emerald-light);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <h3 style="font-size:15px;font-weight:700;margin-bottom:5px;">Тарих</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">Ежелгі дүние, орта ғасыр</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;"><span class="badge badge-green">Орта ғасыр</span><span class="badge badge-gray">ҚР тарихы</span></div>
+            <button class="btn btn-emerald btn-sm" style="width:100%;justify-content:center;" onclick="event.stopPropagation();startTest('history')">Тест бастау</button>
+          </div>
+          <div class="card subject-card" style="--accent-color:#8B5CF6;" onclick="startTest('kazakh')">
+            <div style="width:48px;height:48px;border-radius:12px;background:#F5F3FF;display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <h3 style="font-size:15px;font-weight:700;margin-bottom:5px;">Қазақ тілі</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">Грамматика, сөйлем, емле</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;"><span class="badge" style="background:#F5F3FF;color:#8B5CF6;">Грамматика</span><span class="badge badge-gray">Емле</span></div>
+            <button class="btn btn-purple btn-sm" style="width:100%;justify-content:center;" onclick="event.stopPropagation();startTest('kazakh')">Тест бастау</button>
+          </div>
+          <div class="card subject-card" style="--accent-color:var(--amber);" onclick="startTest('chemistry')">
+            <div style="width:48px;height:48px;border-radius:12px;background:var(--amber-light);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l1 9H8L9 3z"/><path d="M6.5 12a6.5 6.5 0 1 0 11 0"/><line x1="12" y1="3" x2="12" y2="12"/></svg>
+            </div>
+            <h3 style="font-size:15px;font-weight:700;margin-bottom:5px;">Химия</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">Реакциялар, элементтер</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;"><span class="badge badge-amber">Реакциялар</span><span class="badge badge-gray">Кесте</span></div>
+            <button class="btn btn-amber btn-sm" style="width:100%;justify-content:center;" onclick="event.stopPropagation();startTest('chemistry')">Тест бастау</button>
+          </div>
+          <div class="card subject-card" style="--accent-color:var(--rose);" onclick="startTest('biology')">
+            <div style="width:48px;height:48px;border-radius:12px;background:var(--rose-light);display:flex;align-items:center;justify-content:center;margin-bottom:14px;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/><path d="M5 19.5C5.5 18 6 15 6 12c0-.7.12-1.37.34-2"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M12 10a5 5 0 0 0-5 5c0 2.78 1.34 5 5 5s5-2.22 5-5a5 5 0 0 0-5-5z"/></svg>
+            </div>
+            <h3 style="font-size:15px;font-weight:700;margin-bottom:5px;">Биология</h3>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">Жасуша, генетика, экология</p>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;"><span class="badge badge-red">Генетика</span><span class="badge badge-gray">Жасуша</span></div>
+            <button class="btn btn-rose btn-sm" style="width:100%;justify-content:center;" onclick="event.stopPropagation();startTest('biology')">Тест бастау</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test running -->
+      <div id="testRunScreen" style="display:none;">
+        <div class="question-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+            <span class="badge badge-indigo" id="qBadge">1-сұрақ</span>
+            <span class="badge" id="diffBadge">Орта деңгей</span>
+          </div>
+          <div class="question-text" id="questionText">Сұрақ жүктелуде...</div>
+          <div id="optionsContainer"></div>
+          <div class="answer-explain" id="answerExplain"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:24px;">
+            <button class="btn btn-outline" onclick="prevQ()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              Алдыңғы
+            </button>
+            <div style="display:flex;gap:10px;">
+              <button class="btn btn-ghost" onclick="skipQ()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                Өткізу
+              </button>
+              <button class="btn btn-primary" id="nextBtn" onclick="nextQ()">
+                Келесі
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test result -->
+      <div id="testResultScreen" style="display:none;">
+        <div class="card card-lg" style="text-align:center;max-width:500px;margin:0 auto;">
+          <div style="font-size:62px;margin-bottom:18px;" id="resultEmoji">🎉</div>
+          <h2 style="font-size:24px;font-weight:800;margin-bottom:8px;letter-spacing:-.03em;" id="resultTitle">Тамаша нәтиже!</h2>
+          <p style="color:var(--text2);margin-bottom:24px;font-size:13px;" id="resultSub">Математика тестін аяқтадыңыз</p>
+          <div style="background:linear-gradient(135deg,var(--indigo-light),var(--cyan-light));border-radius:var(--radius);padding:28px;margin-bottom:24px;border:1px solid #C5C8FB;">
+            <div style="font-size:54px;font-weight:800;color:var(--indigo);font-family:'JetBrains Mono',monospace;line-height:1;" id="resultScore">85%</div>
+            <div style="color:var(--text2);font-size:13px;margin-top:6px;font-weight:500;" id="resultDetail">10 сұрақтан 8.5 дұрыс</div>
+          </div>
+          <div class="g2" style="margin-bottom:20px;">
+            <div class="metric" style="text-align:left;">
+              <div class="metric-label">Дұрыс жауап</div>
+              <div class="metric-value" style="color:var(--emerald);" id="resCorrect">7</div>
+            </div>
+            <div class="metric" style="text-align:left;">
+              <div class="metric-label">Қате жауап</div>
+              <div class="metric-value" style="color:var(--rose);" id="resWrong">3</div>
+            </div>
+          </div>
+          <div id="resultMotivation" style="background:var(--emerald-light);border:1px solid #A7F3D0;border-radius:var(--radius-sm);padding:14px;margin-bottom:22px;font-size:13px;color:#065F46;text-align:left;line-height:1.6;"></div>
+          <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="goToFeedback()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              AI пікірін алу
+            </button>
+            <button class="btn btn-outline" onclick="exitTest()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+              Басқа тест
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI CHAT PAGE -->
+    <div class="page" id="page-ai">
+      <div style="margin-bottom:22px;">
+        <h2 style="font-size:22px;font-weight:800;letter-spacing:-.03em;">AI Бағалау — Чатбот</h2>
+        <p style="color:var(--text2);margin-top:5px;font-size:13px;">Сұрақ қойыңыз, жауапты тексертіңіз, ұсыныс алыңыз</p>
+      </div>
+      <div style="display:flex;gap:16px;height:calc(100vh - 230px);">
+        <div class="card" style="flex:1;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+          <div style="padding:15px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="avatar" style="width:36px;height:36px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>
+              </div>
+              <div><div style="font-size:13px;font-weight:700;">EduAI Чатбот</div><div style="font-size:11px;color:var(--emerald);font-weight:600;">● Белсенді</div></div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="clearChat()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              Тазалау
+            </button>
+          </div>
+          <div class="chat-messages" id="chatMessages">
+            <div class="msg ai">
+              <div class="avatar sm">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>
+              </div>
+              <div class="msg-bubble">
+                Сәлеметсіз бе! Мен EduAI чатботымын 🤖<br><br>
+                Мен сізге мынадай көмек бере аламын:<br>
+                • Жауабыңызды <strong>тексеру</strong><br>
+                • <strong>Баға шығару</strong> және түсіндіру<br>
+                • Тақырып бойынша <strong>ұсыныс беру</strong><br>
+                • Қателерді <strong>табу және түсіндіру</strong><br>
+                • <strong>Мотивациялық</strong> қолдау<br><br>
+                Қандай сұрағыңыз бар?
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <textarea class="chat-input" id="chatInput" placeholder="Сұрағыңызды жазыңыз..." rows="1" onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+            <button class="btn btn-primary" onclick="sendChat()" id="sendBtn" style="align-self:flex-end;padding:11px 14px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style="width:220px;display:flex;flex-direction:column;gap:12px;flex-shrink:0;">
+          <div class="card card-sm">
+            <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em;">Жылдам сұрақтар</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <button class="btn btn-outline btn-sm" style="justify-content:flex-start;text-align:left;white-space:normal;line-height:1.4;" onclick="quickAsk('Квадрат теңдеудің дискриминантын қалай табамын?')">Дискриминант дегеніміз не?</button>
+              <button class="btn btn-outline btn-sm" style="justify-content:flex-start;text-align:left;white-space:normal;line-height:1.4;" onclick="quickAsk('x² - 5x + 6 = 0 теңдеуін шешіп берші')">Теңдеуді шешіп бер</button>
+              <button class="btn btn-outline btn-sm" style="justify-content:flex-start;text-align:left;white-space:normal;line-height:1.4;" onclick="quickAsk('Менің математика пәнімдегі прогресімді бағалап бер')">Прогресімді бағала</button>
+              <button class="btn btn-outline btn-sm" style="justify-content:flex-start;text-align:left;white-space:normal;line-height:1.4;" onclick="quickAsk('Химияда реакцияны қалай теңестіремін?')">Реакция теңестіру</button>
+              <button class="btn btn-outline btn-sm" style="justify-content:flex-start;text-align:left;white-space:normal;line-height:1.4;" onclick="quickAsk('Маған мотивациялық сөз айтып бер')">Мотивация бер!</button>
+            </div>
+          </div>
+          <div class="card card-sm">
+            <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em;">AI Функциялары</div>
+            <div style="display:flex;flex-direction:column;gap:9px;">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);font-weight:500;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Жауапты тексеру</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);font-weight:500;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Баға шығару</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);font-weight:500;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Ұсыныс беру</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);font-weight:500;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Қате табу</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);font-weight:500;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--emerald)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Мотивациялық пікір</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK PAGE — динамикалық, тест нәтижесіне байланысты -->
+    <div class="page" id="page-feedback">
+      <div style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-size:22px;font-weight:800;letter-spacing:-.03em;">AI Кері байланыс</h2>
+            <p style="color:var(--text2);margin-top:5px;font-size:13px;">Соңғы тест нәтижелері мен AI талдауы</p>
+          </div>
+          <!-- Тест тапсырылса ғана пәнді таңдау батырмалары -->
+          <div id="feedbackSubjectButtons" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        </div>
+      </div>
+
+      <!-- Тест тапсырылмаған жағдай -->
+      <div id="feedbackEmpty" class="card card-lg" style="display:none;">
+        <div class="feedback-empty">
+          <div class="fe-icon">📝</div>
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:10px;">Әлі тест тапсырылмаған</h3>
+          <p>Кері байланыс алу үшін алдымен тест тапсырыңыз.<br>Нәтиже шыққан соң AI сізге толық талдау береді.</p>
+          <button class="btn btn-primary" style="margin-top:20px;" onclick="goPage('test')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Тест тапсыруға өту
+          </button>
+        </div>
+      </div>
+
+      <!-- Тест нәтижесі бар жағдай -->
+      <div id="feedbackContent" style="display:none;">
+        <!-- Score card -->
+        <div class="card card-lg" style="margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:28px;flex-wrap:wrap;">
+            <div class="score-ring">
+              <svg width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="var(--surface2)" stroke-width="10"/>
+                <circle cx="50" cy="50" r="42" fill="none" stroke="url(#ringGrad)" stroke-width="10" id="scoreRingCircle" stroke-dasharray="263.9" stroke-dashoffset="39.6" stroke-linecap="round"/>
+                <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="var(--indigo)"/><stop offset="100%" stop-color="var(--cyan)"/></linearGradient></defs>
+              </svg>
+              <div class="score-num" id="fbScoreNum">85%</div>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:18px;font-weight:800;margin-bottom:5px;letter-spacing:-.02em;" id="fbSubjectName">Алгебра: Квадрат теңдеулер</div>
+              <div style="color:var(--text2);font-size:12px;margin-bottom:14px;font-weight:500;" id="fbDateTime">Тапсырылды: Бүгін</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;" id="fbBadges"></div>
+            </div>
+            <button class="btn btn-primary" onclick="generateAIFeedback()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>
+              AI Пікір жасату
+            </button>
+          </div>
+        </div>
+
+        <div class="g2" style="margin-bottom:20px;">
+          <div class="card">
+            <div class="section-header">
+              <span class="section-title">AI Бағалау пікірі</span>
+              <span class="ai-badge"><span class="ai-dot"></span>AI жасады</span>
+            </div>
+            <div id="fbFeedbackItems">
+              <div style="text-align:center;padding:28px;color:var(--text3);font-size:13px;">"AI Пікір жасату" батырмасын басыңыз</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-header"><span class="section-title">Сұрақ талдауы</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px;" id="fbQuestionBreakdown"></div>
+          </div>
+        </div>
+
+        <div class="card" style="background:linear-gradient(135deg,var(--indigo-light),var(--cyan-light));border-color:#C5C8FB;">
+          <div style="display:flex;align-items:flex-start;gap:16px;">
+            <div style="font-size:38px;">🚀</div>
+            <div>
+              <div style="font-size:14px;font-weight:800;color:var(--indigo);margin-bottom:7px;">AI Мотивациялық пікір</div>
+              <div style="font-size:13px;color:var(--indigo-dark);line-height:1.7;" id="fbMotivation">
+                "AI Пікір жасату" батырмасын басып, жеке мотивациялық пікір алыңыз!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS PAGE -->
+    <div class="page" id="page-stats">
+      <div style="margin-bottom:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h2 style="font-size:22px;font-weight:800;letter-spacing:-.03em;">Прогресс статистикасы</h2>
+            <p style="color:var(--text2);margin-top:5px;font-size:13px;">Сіздің оқу жолыңыз мен нәтижелеріңіз</p>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline btn-sm" onclick="setStatPeriod('week',this)">Апта</button>
+            <button class="btn btn-primary btn-sm" onclick="setStatPeriod('month',this)">Ай</button>
+            <button class="btn btn-outline btn-sm" onclick="setStatPeriod('all',this)">Барлығы</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="g4" style="margin-bottom:20px;">
+        <div class="metric">
+          <div class="metric-label">Жалпы тесттер</div>
+          <div class="metric-value" id="stat-total">0</div>
+          <div class="metric-sub" id="stat-total-sub" style="color:var(--text3);">Тест тапсыру бастаңыз</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Орташа балл</div>
+          <div class="metric-value" style="color:var(--indigo);" id="stat-avg">—</div>
+          <div class="metric-sub" style="color:var(--text3);" id="stat-avg-sub">Деректер жоқ</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Жалпы уақыт</div>
+          <div class="metric-value" id="stat-time">0 мин</div>
+          <div class="metric-sub" style="color:var(--text3);">Бұл айда</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">AI ұпайлары</div>
+          <div class="metric-value" style="color:var(--emerald);" id="stat-points">0</div>
+          <div class="metric-sub" style="color:var(--text3);">Жиналған ұпайлар</div>
+        </div>
+      </div>
+
+      <div class="g2" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="section-header"><span class="section-title">Апталық нәтижелер</span></div>
+          <div class="bar-chart" id="weeklyChart"></div>
+        </div>
+        <div class="card">
+          <div class="section-header"><span class="section-title">Пән бойынша нәтиже</span></div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:var(--indigo);">∑</span> Математика</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="stat-prog-math" style="width:0%;background:var(--indigo);"></div></div>
+            <span class="skill-pct" id="stat-pct-math" style="color:var(--indigo);">0%</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:var(--cyan);">⚛</span> Физика</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="stat-prog-physics" style="width:0%;background:var(--cyan);"></div></div>
+            <span class="skill-pct" id="stat-pct-physics" style="color:var(--cyan);">0%</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:var(--amber);">⚗</span> Химия</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="stat-prog-chemistry" style="width:0%;background:var(--amber);"></div></div>
+            <span class="skill-pct" id="stat-pct-chemistry" style="color:var(--amber);">0%</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:var(--emerald);">🌐</span> Тарих</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="stat-prog-history" style="width:0%;background:var(--emerald);"></div></div>
+            <span class="skill-pct" id="stat-pct-history" style="color:var(--emerald);">0%</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:#8B5CF6;">📖</span> Қазақ тілі</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="stat-prog-kazakh" style="width:0%;background:#8B5CF6;"></div></div>
+            <span class="skill-pct" id="stat-pct-kazakh" style="color:#8B5CF6;">0%</span>
+          </div>
+          <div class="skill-row">
+            <span class="skill-name"><span style="color:var(--rose);">🧬</span> Биология</span>
+            <div class="progress" style="flex:1;"><div class="progress-bar" id="stat-prog-biology" style="width:0%;background:var(--rose);"></div></div>
+            <span class="skill-pct" id="stat-pct-biology" style="color:var(--rose);">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <span class="section-title">Жетістіктер</span>
+          <span class="badge badge-indigo" id="achievements-count">0/20 алынды</span>
+        </div>
+        <div class="g4">
+          <div class="achievement locked" id="ach-streak">
+            <div style="font-size:32px;margin-bottom:8px;">🔥</div>
+            <div style="font-size:12px;font-weight:700;">Серия шебері</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px;">7 күндік серия</div>
+          </div>
+          <div class="achievement locked" id="ach-gold">
+            <div style="font-size:32px;margin-bottom:8px;">🥇</div>
+            <div style="font-size:12px;font-weight:700;">Алтын оқушы</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px;">1000+ ұпай</div>
+          </div>
+          <div class="achievement locked" id="ach-scholar">
+            <div style="font-size:32px;margin-bottom:8px;">📚</div>
+            <div style="font-size:12px;font-weight:700;">Білім іздеуші</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px;">20+ тест тапсыр</div>
+          </div>
+          <div class="achievement locked" id="ach-champ">
+            <div style="font-size:32px;margin-bottom:8px;">🏆</div>
+            <div style="font-size:12px;font-weight:700;">Чемпион</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:3px;">Топ 1-ге кір</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /app-shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+let currentPage = 'dashboard';
+let sidebarOpen = true;
+
+// Test state
+let testState = {
+  subject: null,
+  questions: [],
+  currentQ: 0,
+  answers: [],
+  timer: null,
+  timeLeft: 1200,
+  correct: 0,
+  total: 0,
+  pct: 0,
+  startTime: null,
+};
+
+// Соңғы тест нәтижелерінің тарихы — feedback беті үшін
+// completedTests = [{subject, pct, correct, total, answers, questions, date}]
+let completedTests = [];
+let activeFeedbackSubject = null; // Қазір қараып тұрған пән
+
+let chatHistory = [];
+
+// Пән атаулары
+const SUB_NAMES = {
+  math: 'Математика',
+  physics: 'Физика',
+  history: 'Тарих',
+  kazakh: 'Қазақ тілі',
+  chemistry: 'Химия',
+  biology: 'Биология',
+};
+
+const SUB_TOPICS = {
+  math: 'Алгебра: Квадрат теңдеулер',
+  physics: 'Физика: Механика',
+  history: 'Тарих: Орта ғасыр',
+  kazakh: 'Қазақ тілі: Грамматика',
+  chemistry: 'Химия: Реакциялар',
+  biology: 'Биология: Жасуша',
+};
+
+// ===================== AUTH =====================
+function switchAuthTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+function doLogin() {
+  completedTests = [];
+  activeFeedbackSubject = null;
+  testState = { subject: null, questions: [], currentQ: 0, answers: [], timer: null, timeLeft: 1200, correct: 0, total: 0, pct: 0, startTime: null };
+  chatHistory = [];
+
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appShell').style.display = 'flex';
+  initApp();
+}
+
+function logout() {
+  if (testState.timer) clearInterval(testState.timer);
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+// ===================== NAVIGATION =====================
+function goPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const nav = document.getElementById('nav-' + page);
+  if (nav) nav.classList.add('active');
+  currentPage = page;
+  const titles = { dashboard: 'Басты бет', test: 'Тест тапсыру', ai: 'AI Бағалау', feedback: 'Кері байланыс', stats: 'Статистика' };
+  document.getElementById('topbarTitle').textContent = titles[page] || '';
+
+  if (page === 'feedback') renderFeedbackPage();
+  if (page === 'stats') updateStats();
+  if (page === 'dashboard') updateDashboard();
+}
+
+// "AI пікірін алу" батырмасынан — соңғы тапсырылған тестке тікелей кіру
+function goToFeedback() {
+  // Соңғы тапсырылған тест автоматты таңдалады
+  if (completedTests.length > 0) {
+    activeFeedbackSubject = completedTests[completedTests.length - 1].subject;
+  }
+  goPage('feedback');
+}
+
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.querySelector('.app-shell').classList.toggle('sidebar-hidden', !sidebarOpen);
+}
+
+// ===================== TEST DATA =====================
+const QUESTIONS = {
+  math: [
+    { q: 'x² − 5x + 6 = 0 теңдеуінің түбірлері қандай?', opts: ['x=1, x=6', 'x=2, x=3', 'x=−2, x=−3', 'x=5, x=−6'], ans: 1, diff: 'Орта', explain: 'Факторлау: (x−2)(x−3)=0, сондықтан x=2 немесе x=3.' },
+    { q: '2x² − 8 = 0 теңдеуін шешіңіз.', opts: ['x=±4', 'x=±2', 'x=±8', 'Түбір жоқ'], ans: 1, diff: 'Жеңіл', explain: '2x²=8, x²=4, x=±2.' },
+    { q: 'x² + 4x + 4 = 0 теңдеуінің жалғыз түбірі?', opts: ['x=2', 'x=−2', 'x=4', 'x=−4'], ans: 1, diff: 'Жеңіл', explain: 'x²+4x+4=(x+2)²=0, x=−2 — бір ғана түбір.' },
+    { q: 'a=1, b=−3, c=2 болса, дискриминант D=?', opts: ['1', '9', '2', '−7'], ans: 0, diff: 'Орта', explain: 'D=(−3)²−4(1)(2)=9−8=1.' },
+    { q: 'x² − 9 = 0 теңдеуін шешіңіз.', opts: ['x=9', 'x=±3', 'x=3', 'x=±9'], ans: 1, diff: 'Жеңіл', explain: 'x²=9, x=±3.' },
+    { q: 'x² + x + 1 = 0 теңдеуінің нақты түбірі бар ма?', opts: ['Иә, 2 түбір', 'Иә, 1 түбір', 'Жоқ, нақты түбір жоқ', 'Иә, 3 түбір'], ans: 2, diff: 'Қиын', explain: 'D=1−4=−3<0, нақты түбір жоқ.' },
+    { q: '3x² − 12x = 0 теңдеуін шешіңіз.', opts: ['x=0 ғана', 'x=4 ғана', 'x=0 және x=4', 'x=−4 және x=4'], ans: 2, diff: 'Орта', explain: '3x(x−4)=0, сондықтан x=0 немесе x=4.' },
+    { q: 'Вьет теоремасы: a=1, b=−5 болса, x₁+x₂=?', opts: ['5', '−5', '1/5', '−1/5'], ans: 0, diff: 'Орта', explain: 'x₁+x₂=−(−5)/1=5.' },
+    { q: 'x² − 6x + 9 = 0 теңдеуінің дискриминанты?', opts: ['D=0', 'D=9', 'D=36', 'D=−9'], ans: 0, diff: 'Орта', explain: 'D=36−36=0. Бір ғана түбір: x=3.' },
+    { q: '2x² + 5x − 3 = 0 теңдеуінің бір түбірі x=0.5. Екінші түбірі?', opts: ['x=3', 'x=−3', 'x=1', 'x=−1.5'], ans: 1, diff: 'Қиын', explain: 'Вьет: x₁·x₂=c/a=−3/2=−1.5. 0.5·x₂=−1.5, x₂=−3.' },
+  ],
+  physics: [
+    { q: 'F=ma. Масса 5 кг, үдеу 3 м/с². Күш?', opts: ['15 Н', '8 Н', '2 Н', '1.67 Н'], ans: 0, diff: 'Жеңіл', explain: 'F=5×3=15 Н.' },
+    { q: 'v=s/t. s=100 м, t=20 с. v=?', opts: ['2000 м/с', '80 м/с', '5 м/с', '0.2 м/с'], ans: 2, diff: 'Жеңіл', explain: 'v=100/20=5 м/с.' },
+    { q: 'R=U/I. U=12 В, I=4 А. R=?', opts: ['48 Ом', '3 Ом', '8 Ом', '16 Ом'], ans: 1, diff: 'Орта', explain: 'R=12/4=3 Ом.' },
+    { q: 'Жарықтың вакуумдегі жылдамдығы?', opts: ['300 000 км/с', '30 000 км/с', '3 000 км/с', '3 000 000 км/с'], ans: 0, diff: 'Жеңіл', explain: 'c≈3×10⁸ м/с = 300 000 км/с.' },
+    { q: 'E=mgh. m=10 кг, g=10 м/с², h=5 м. E=?', opts: ['500 Дж', '50 Дж', '5000 Дж', '15 Дж'], ans: 0, diff: 'Орта', explain: 'E=10×10×5=500 Дж.' },
+  ],
+  history: [
+    { q: 'Қазақстан қашан тәуелсіздік алды?', opts: ['1990', '1991', '1992', '1989'], ans: 1, diff: 'Жеңіл', explain: 'Қазақстан 1991 жылы 16 желтоқсанда тәуелсіздік жариялады.' },
+    { q: 'Орхон жазбалары қай ғасырда жасалды?', opts: ['VI ғ.', 'VII ғ.', 'VIII ғ.', 'IX ғ.'], ans: 2, diff: 'Орта', explain: 'Орхон-Енисей жазбалары VIII ғасырда (700-750 жж.) жасалды.' },
+    { q: 'Ұлы Жібек жолы қай қалалары арқылы өтті?', opts: ['Тараз, Сайрам, Отырар', 'Астана, Алматы, Шымкент', 'Рим, Афина, Спарта', 'Мәскеу, Пекин, Дели'], ans: 0, diff: 'Орта', explain: 'Жібек жолы Орта Азия арқылы — Тараз, Сайрам, Отырар арқылы өтті.' },
+    { q: 'Абай Құнанбаев нешінші жылы туды?', opts: ['1845', '1850', '1860', '1835'], ans: 0, diff: 'Жеңіл', explain: 'Абай Құнанбаев 1845 жылы туды.' },
+    { q: 'Монғол империясын кім құрды?', opts: ['Батыхан', 'Шыңғысхан', 'Тоқтамыс', 'Темірлан'], ans: 1, diff: 'Жеңіл', explain: 'Монғол империясын Шыңғысхан (Темүжін) 1206 жылы құрды.' },
+  ],
+  kazakh: [
+    { q: '"Бала" сөзінің көптік жалғауы?', opts: ['Балалар', 'Баладар', 'Балалари', 'Балалер'], ans: 0, diff: 'Жеңіл', explain: 'Ашық буынды сөздерге -лар/-лер жалғанады: Бала+лар=Балалар.' },
+    { q: '"Кел" етістігінің бұйрық рай 2-жақ жекеше түрі?', opts: ['Келіңіз', 'Кел', 'Келейін', 'Келсін'], ans: 1, diff: 'Орта', explain: 'Бұйрық рай, 2-жақ жекеше — етістіктің негізгі түрі: Кел.' },
+    { q: 'Сын есімнің шырай түрлері нешеу?', opts: ['2', '3', '4', '5'], ans: 1, diff: 'Орта', explain: 'Сын есімнің 3 шырайы бар: жай, салыстырмалы, күшейтпелі.' },
+    { q: '"Үй" сөзіне барыс септік жалғауы?', opts: ['Үйден', 'Үйде', 'Үйге', 'Үйді'], ans: 2, diff: 'Жеңіл', explain: 'Барыс септік жалғауы: Үй+ге=Үйге.' },
+  ],
+  chemistry: [
+    { q: 'Су молекуласының формуласы?', opts: ['CO₂', 'H₂O', 'NaCl', 'O₂'], ans: 1, diff: 'Жеңіл', explain: 'Су — сутегі мен оттегінің қосылысы: H₂O.' },
+    { q: 'Натрий элементінің символы?', opts: ['N', 'Na', 'Ni', 'Ne'], ans: 1, diff: 'Жеңіл', explain: 'Натрий (Natrium) — Na символымен белгіленеді.' },
+    { q: '2H₂ + O₂ → ? реакция өнімі?', opts: ['2H₂O', 'H₂O₂', '4HO', 'H₄O₂'], ans: 0, diff: 'Орта', explain: 'Сутегінің жануы: 2H₂+O₂→2H₂O — су түзіледі.' },
+    { q: 'Мендел кестесінде 1-ші топтың 1-ші периоды?', opts: ['Li', 'H', 'He', 'Na'], ans: 1, diff: 'Орта', explain: 'Сутегі (H) — 1-ші период, 1-ші топ.' },
+  ],
+  biology: [
+    { q: 'Жасуша ядросының негізгі қызметі?', opts: ['Энергия өндіру', 'Генетикалық ақпаратты сақтау', 'Фотосинтез', 'Ақуыз синтезі'], ans: 1, diff: 'Орта', explain: 'Ядро — жасушаның "бас мозгі", ДНҚ (генетикалық ақпарат) сақтайды.' },
+    { q: 'Фотосинтез қай органоидта жүреді?', opts: ['Митохондрия', 'Рибосома', 'Хлоропласт', 'Ядро'], ans: 2, diff: 'Жеңіл', explain: 'Фотосинтез хлоропластта жүреді — жасыл пигмент хлорофиль бар.' },
+    { q: 'ДНҚ-ның толық атауы?', opts: ['Дезоксирибонуклеин қышқылы', 'Рибонуклеин қышқылы', 'Дезоксирибоза нуклеин', 'Диоксинуклеин қышқылы'], ans: 0, diff: 'Орта', explain: 'ДНҚ = Дезоксирибонуклеин қышқылы.' },
+  ],
+};
+
+// ===================== TEST SYSTEM =====================
+function startTest(subject) {
+  testState.subject = subject;
+  testState.questions = QUESTIONS[subject] || [];
+  testState.currentQ = 0;
+  testState.answers = new Array(testState.questions.length).fill(null);
+  testState.timeLeft = testState.questions.length * 90;
+  testState.startTime = Date.now();
+
+  document.getElementById('testSelectScreen').style.display = 'none';
+  document.getElementById('testRunScreen').style.display = 'block';
+  document.getElementById('testResultScreen').style.display = 'none';
+  document.getElementById('testRunHeader').style.display = 'block';
+  document.getElementById('qTotal').textContent = testState.questions.length;
+  document.getElementById('testSubjectName').textContent = SUB_TOPICS[subject] || '';
+  document.getElementById('testSubjectBadge').textContent = SUB_NAMES[subject] || '';
+
+  renderQuestion();
+  startTimer();
+}
+
+function exitTest() {
+  if (testState.timer) clearInterval(testState.timer);
+  testState.timer = null;
+  document.getElementById('testSelectScreen').style.display = 'block';
+  document.getElementById('testRunScreen').style.display = 'none';
+  document.getElementById('testResultScreen').style.display = 'none';
+  document.getElementById('testRunHeader').style.display = 'none';
+}
+
+function renderQuestion() {
+  const q = testState.questions[testState.currentQ];
+  if (!q) return;
+  const idx = testState.currentQ;
+  document.getElementById('qBadge').textContent = (idx + 1) + '-сұрақ';
+  const diffColors = { Жеңіл: 'badge-green', Орта: 'badge-amber', Қиын: 'badge-red' };
+  document.getElementById('diffBadge').className = 'badge ' + (diffColors[q.diff] || 'badge-gray');
+  document.getElementById('diffBadge').textContent = q.diff;
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('qNum').textContent = idx + 1;
+  const pct = Math.round(((idx + 1) / testState.questions.length) * 100);
+  document.getElementById('testProgressBar').style.width = pct + '%';
+
+  const keys = ['A', 'B', 'C', 'D'];
+  document.getElementById('optionsContainer').innerHTML = q.opts.map((opt, i) => {
+    let cls = 'option';
+    if (testState.answers[idx] !== null) {
+      if (i === q.ans) cls += ' correct';
+      else if (testState.answers[idx] === i) cls += ' wrong';
+    }
+    return `<div class="${cls}" onclick="selectOpt(${i})"><div class="option-key">${keys[i]}</div>${opt}</div>`;
+  }).join('');
+
+  const expl = document.getElementById('answerExplain');
+  if (testState.answers[idx] !== null) {
+    const ok = testState.answers[idx] === q.ans;
+    expl.className = 'answer-explain show';
+    expl.style.background = ok ? 'var(--emerald-light)' : 'var(--amber-light)';
+    expl.style.border = '1px solid ' + (ok ? '#A7F3D0' : '#FDE68A');
+    expl.style.borderLeft = '3px solid ' + (ok ? 'var(--emerald)' : 'var(--amber)');
+    expl.innerHTML = '<strong>' + (ok ? '✅ Дұрыс!' : '❌ Қате.') + '</strong> ' + q.explain;
+  } else {
+    expl.className = 'answer-explain';
+  }
+
+  const nextBtn = document.getElementById('nextBtn');
+  if (idx === testState.questions.length - 1) {
+    nextBtn.innerHTML = 'Аяқтау <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    nextBtn.onclick = finishTest;
+  } else {
+    nextBtn.innerHTML = 'Келесі <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+    nextBtn.onclick = nextQ;
+  }
+}
+
+function selectOpt(i) {
+  if (testState.answers[testState.currentQ] !== null) return;
+  testState.answers[testState.currentQ] = i;
+  renderQuestion();
+}
+
+function nextQ() { if (testState.currentQ < testState.questions.length - 1) { testState.currentQ++; renderQuestion(); } }
+function prevQ() { if (testState.currentQ > 0) { testState.currentQ--; renderQuestion(); } }
+function skipQ() { testState.answers[testState.currentQ] = -1; nextQ(); }
+
+function startTimer() {
+  if (testState.timer) clearInterval(testState.timer);
+  updateTimer();
+  testState.timer = setInterval(() => {
+    testState.timeLeft--;
+    updateTimer();
+    if (testState.timeLeft <= 0) finishTest();
+  }, 1000);
+}
+
+function updateTimer() {
+  const m = Math.floor(testState.timeLeft / 60).toString().padStart(2, '0');
+  const s = (testState.timeLeft % 60).toString().padStart(2, '0');
+  const el = document.getElementById('timerDisplay');
+  if (el) el.textContent = m + ':' + s;
+}
+
+function finishTest() {
+  clearInterval(testState.timer);
+  testState.timer = null;
+  const correct = testState.answers.filter((a, i) => a === testState.questions[i].ans).length;
+  const total = testState.questions.length;
+  const pct = Math.round((correct / total) * 100);
+
+  testState.correct = correct;
+  testState.total = total;
+  testState.pct = pct;
+
+  // Нәтижені сақтаймыз
+  const now = new Date();
+  const timeStr = now.toLocaleDateString('kk-KZ') + ', ' + now.toLocaleTimeString('kk-KZ', { hour: '2-digit', minute: '2-digit' });
+  completedTests.push({
+    subject: testState.subject,
+    pct,
+    correct,
+    total,
+    answers: [...testState.answers],
+    questions: [...testState.questions],
+    date: timeStr,
+  });
+
+  // Соңғы тест — feedback-та автоматты таңдалады
+  activeFeedbackSubject = testState.subject;
+
+  document.getElementById('testRunScreen').style.display = 'none';
+  document.getElementById('testResultScreen').style.display = 'block';
+  document.getElementById('testRunHeader').style.display = 'none';
+
+  document.getElementById('resultScore').textContent = pct + '%';
+  document.getElementById('resultDetail').textContent = total + ' сұрақтан ' + correct + ' дұрыс';
+  document.getElementById('resCorrect').textContent = correct;
+  document.getElementById('resWrong').textContent = total - correct;
+  document.getElementById('resultSub').textContent = (SUB_NAMES[testState.subject] || '') + ' тестін аяқтадыңыз';
+
+  let emoji = '😊', title = 'Жақсы нәтиже!';
+  if (pct >= 90) { emoji = '🏆'; title = 'Керемет! Тамаша нәтиже!'; }
+  else if (pct >= 80) { emoji = '🎉'; title = 'Жақсы жұмыс!'; }
+  else if (pct >= 60) { emoji = '📚'; title = 'Жаман емес, жалғастырыңыз!'; }
+  else { emoji = '💪'; title = 'Тырысыңыз, бола аласыз!'; }
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+
+  const motivations = [
+    'Сіз өте жақсы жұмыс жасадыңыз! Әрбір тест — жаңа білім. Алға қарай!',
+    'Мықты! Осы қарқынмен жалғастырыңыз — сіз шыңға жетесіз!',
+    'Сіздің тырысқаныңыз байқалды. Кішкентай қателер — үлкен сабақ!',
+    'Тамаша! Осы пән бойынша сіз жақсы меңгеріп жатырсыз!',
+  ];
+  document.getElementById('resultMotivation').textContent = motivations[Math.floor(Math.random() * motivations.length)];
+
+  updateDashboard();
+  updateStats();
+}
+
+// ===================== FEEDBACK PAGE =====================
+function renderFeedbackPage() {
+  // Тапсырылған тесттер бар ма?
+  if (completedTests.length === 0) {
+    document.getElementById('feedbackEmpty').style.display = 'block';
+    document.getElementById('feedbackContent').style.display = 'none';
+    document.getElementById('feedbackSubjectButtons').innerHTML = '';
+    return;
+  }
+
+  document.getElementById('feedbackEmpty').style.display = 'none';
+  document.getElementById('feedbackContent').style.display = 'block';
+
+  // Тапсырылған тесттердің пән батырмаларын жасаймыз
+  // Соңғы нәтижеге қарай (пән бойынша соңғы тест)
+  const subjectsSeen = {};
+  completedTests.forEach(t => { subjectsSeen[t.subject] = t; }); // соңғы нәтиже жеңеді
+
+  const subjectColors = {
+    math: 'btn-primary',
+    physics: 'btn-cyan',
+    history: 'btn-emerald',
+    kazakh: 'btn-purple',
+    chemistry: 'btn-amber',
+    biology: 'btn-rose',
+  };
+
+  const btnContainer = document.getElementById('feedbackSubjectButtons');
+  btnContainer.innerHTML = '';
+  Object.keys(subjectsSeen).forEach(sub => {
+    const t = subjectsSeen[sub];
+    const isActive = sub === activeFeedbackSubject;
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm ' + (isActive ? subjectColors[sub] || 'btn-primary' : 'btn-outline');
+    btn.textContent = SUB_NAMES[sub] + ' ' + t.pct + '%';
+    btn.onclick = () => {
+      activeFeedbackSubject = sub;
+      renderFeedbackPage();
+    };
+    btnContainer.appendChild(btn);
+  });
+
+  // Егер activeFeedbackSubject жоқ болса, соңғысын аламыз
+  if (!activeFeedbackSubject || !subjectsSeen[activeFeedbackSubject]) {
+    activeFeedbackSubject = completedTests[completedTests.length - 1].subject;
+  }
+
+  const t = subjectsSeen[activeFeedbackSubject];
+  if (!t) return;
+
+  // Score ring
+  const circumference = 263.9;
+  const offset = circumference - (t.pct / 100) * circumference;
+  document.getElementById('scoreRingCircle').setAttribute('stroke-dashoffset', offset.toFixed(1));
+  document.getElementById('fbScoreNum').textContent = t.pct + '%';
+  document.getElementById('fbSubjectName').textContent = SUB_TOPICS[t.subject] || SUB_NAMES[t.subject];
+  document.getElementById('fbDateTime').textContent = 'Тапсырылды: ' + t.date;
+
+  // Badges
+  let grade = 'A+';
+  if (t.pct < 90) grade = 'A';
+  if (t.pct < 80) grade = 'B+';
+  if (t.pct < 70) grade = 'B';
+  if (t.pct < 60) grade = 'C';
+  if (t.pct < 50) grade = 'D';
+
+  document.getElementById('fbBadges').innerHTML = `
+    <span class="badge badge-green">✓ ${t.correct} дұрыс</span>
+    <span class="badge badge-red">✗ ${t.total - t.correct} қате</span>
+    <span class="badge badge-indigo">${grade} деңгей</span>
+  `;
+
+  // Сұрақ талдауы
+  const bd = document.getElementById('fbQuestionBreakdown');
+  bd.innerHTML = t.questions.map((q, i) => {
+    const userAns = t.answers[i];
+    const isCorrect = userAns === q.ans;
+    const isSkipped = userAns === -1 || userAns === null;
+    let badge = isSkipped ? '<span class="badge badge-gray">— Өткізілді</span>' : (isCorrect ? '<span class="badge badge-green">✓ Дұрыс</span>' : '<span class="badge badge-red">✗ Қате</span>');
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:var(--radius-sm);background:var(--surface2);">
+        <span style="font-size:12px;color:var(--text2);font-weight:500;">${i + 1}. ${q.q.substring(0, 40)}${q.q.length > 40 ? '...' : ''}</span>
+        ${badge}
+      </div>
+    `;
+  }).join('');
+
+  // AI feedback-ті тазалаймыз (жаңа тест үшін)
+  document.getElementById('fbFeedbackItems').innerHTML = `
+    <div style="text-align:center;padding:28px;color:var(--text3);font-size:13px;">"AI Пікір жасату" батырмасын басыңыз</div>
+  `;
+  document.getElementById('fbMotivation').textContent = '"AI Пікір жасату" батырмасын басып, жеке мотивациялық пікір алыңыз!';
+}
+
+async function generateAIFeedback() {
+  if (!activeFeedbackSubject) return;
+
+  const subjectsSeen = {};
+  completedTests.forEach(t => { subjectsSeen[t.subject] = t; });
+  const t = subjectsSeen[activeFeedbackSubject];
+  if (!t) return;
+
+  showToast('AI пікір жасатылуда...');
+
+  const wrongQuestions = t.questions
+    .map((q, i) => ({ q, ans: t.answers[i] }))
+    .filter(item => item.ans !== item.q.ans && item.ans !== -1 && item.ans !== null)
+    .map(item => item.q.q)
+    .join('; ');
+
+  const prompt = `Сен EduAI платформасының AI мұғаліміссің. 
+  
+${SUB_NAMES[t.subject]} пәнінен тест тапсырған 8-сынып оқушысы Айгерімге кері байланыс жаз.
+Нәтиже: ${t.total} сұрақтан ${t.correct} дұрыс (${t.pct}%).
+${wrongQuestions ? 'Қате сұрақтар: ' + wrongQuestions : 'Барлық жауап дұрыс!'}
+
+Мыналарды жаз (қазақ тілінде, достық тонда):
+1. 💪 Күшті жақтары — 2 сөйлем
+2. ⚠️ Жақсарту керек — 2 сөйлем  
+3. 💡 Нақты ұсыныс — 2 сөйлем
+4. 🎯 Келесі мақсат — 1 сөйлем
+5. 🚀 Мотивациялық сөз — 2 сөйлем жеке оқушыға
+
+JSON форматында қайтар, басқа ештеңе жазба:
+{"strength":"...","weakness":"...","tip":"...","goal":"...","motivation":"..."}`;
+
+  try {
+    const resp = await fetch(CLAUDE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await resp.json();
+    let text = data.content?.[0]?.text || '';
+    text = text.replace(/```json|```/g, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(text); } catch (e) { parsed = null; }
+
+    if (parsed) {
+      document.getElementById('fbFeedbackItems').innerHTML = `
+        <div class="feedback-item feedback-strength">
+          <div class="fi-title" style="color:var(--emerald);">💪 Күшті жақтары</div>
+          <div class="fi-body">${parsed.strength}</div>
+        </div>
+        <div class="feedback-item feedback-weakness">
+          <div class="fi-title" style="color:var(--amber);">⚠️ Жақсарту керек</div>
+          <div class="fi-body">${parsed.weakness}</div>
+        </div>
+        <div class="feedback-item feedback-tip">
+          <div class="fi-title" style="color:var(--indigo);">💡 AI Ұсынысы</div>
+          <div class="fi-body">${parsed.tip}</div>
+        </div>
+        <div class="feedback-item" style="background:#FFF1F2;border-color:var(--rose);">
+          <div class="fi-title" style="color:var(--rose);">🎯 Келесі мақсат</div>
+          <div class="fi-body">${parsed.goal}</div>
+        </div>
+      `;
+      document.getElementById('fbMotivation').textContent = parsed.motivation;
+      showToast('✅ AI пікір жаңартылды!');
+    } else {
+      // JSON парсинг сәтсіз болса, мәтінді тікелей көрсетеміз
+      document.getElementById('fbMotivation').textContent = text;
+      showToast('✅ AI пікір алынды!');
+    }
+  } catch (e) {
+    showToast('AI қол жетімді емес');
+  }
+}
+
+// ===================== DASHBOARD UPDATE =====================
+function updateDashboard() {
+  const allPcts = completedTests.map(t => t.pct);
+  const total = allPcts.length;
+  const avg = total > 0 ? Math.round(allPcts.reduce((a, b) => a + b, 0) / total) : null;
+
+  document.getElementById('dash-total').textContent = total;
+  document.getElementById('dash-total-sub').textContent = 'Бұл аптада ' + total + ' тест';
+  document.getElementById('dash-avg').textContent = avg !== null ? avg + '%' : '—';
+  document.getElementById('dash-avg-sub').textContent = avg !== null ? (avg >= 80 ? '↑ Жақсы нәтиже!' : '↑ Жалғастырыңыз!') : 'Тест тапсырыңыз';
+
+  const points = completedTests.reduce((sum, t) => sum + Math.round(t.pct), 0);
+  document.getElementById('dash-points').textContent = points;
+
+  // Streak
+  const streak = total > 0 ? Math.min(total, 7) : 0;
+  document.getElementById('dash-streak').textContent = '🔥 ' + streak + ' күн';
+
+  // Пән бойынша прогресс
+  const subjectGroups = {};
+  completedTests.forEach(t => {
+    if (!subjectGroups[t.subject]) subjectGroups[t.subject] = [];
+    subjectGroups[t.subject].push(t.pct);
+  });
+
+  Object.keys(SUB_NAMES).forEach(sub => {
+    const scores = subjectGroups[sub] || [];
+    const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const progEl = document.getElementById('prog-' + sub);
+    const pctEl = document.getElementById('pct-' + sub);
+    if (progEl) progEl.style.width = avg + '%';
+    if (pctEl) pctEl.textContent = avg + '%';
+  });
+}
+
+// ===================== STATS UPDATE =====================
+function updateStats() {
+  const allPcts = completedTests.map(t => t.pct);
+  const total = allPcts.length;
+  const avg = total > 0 ? Math.round(allPcts.reduce((a, b) => a + b, 0) / total) : null;
+  const points = completedTests.reduce((sum, t) => sum + Math.round(t.pct), 0);
+  const timeMin = completedTests.reduce((sum, t) => sum + Math.round(t.total * 1.5), 0);
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-total-sub').textContent = total > 0 ? total + ' тест тапсырылды' : 'Тест тапсыру бастаңыз';
+  document.getElementById('stat-avg').textContent = avg !== null ? avg + '%' : '—';
+  document.getElementById('stat-avg-sub').textContent = avg !== null ? 'Орташа нәтиже' : 'Деректер жоқ';
+  document.getElementById('stat-time').textContent = timeMin + ' мин';
+  document.getElementById('stat-points').textContent = points;
+
+  // Пән бойынша
+  const subjectGroups = {};
+  completedTests.forEach(t => {
+    if (!subjectGroups[t.subject]) subjectGroups[t.subject] = [];
+    subjectGroups[t.subject].push(t.pct);
+  });
+
+  Object.keys(SUB_NAMES).forEach(sub => {
+    const scores = subjectGroups[sub] || [];
+    const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+    const progEl = document.getElementById('stat-prog-' + sub);
+    const pctEl = document.getElementById('stat-pct-' + sub);
+    if (progEl) progEl.style.width = avg + '%';
+    if (pctEl) pctEl.textContent = avg + '%';
+  });
+
+  // Апталық диаграмма — соңғы 7 күн немесе соңғы 7 тест
+  const days = ['Дс', 'Сс', 'Ср', 'Бс', 'Жм', 'Сб', 'Жк'];
+  const chartData = days.map((d, i) => {
+    const t = completedTests[i] || null;
+    return { d, v: t ? t.pct : 0, color: t ? 'linear-gradient(to top,var(--indigo),var(--cyan))' : 'var(--border)' };
+  });
+
+  document.getElementById('weeklyChart').innerHTML = chartData.map(item => `
+    <div class="bar-col">
+      <div class="bar-val">${item.v ? item.v + '%' : ''}</div>
+      <div class="bar" style="height:${item.v ? (item.v / 100 * 100) : 6}px;background:${item.color};"></div>
+      <div class="bar-lbl">${item.d}</div>
+    </div>
+  `).join('');
+
+  // Жетістіктер
+  let achieved = 0;
+  if (total >= 1) { document.getElementById('ach-streak').classList.remove('locked'); achieved++; }
+  if (points >= 1000) { document.getElementById('ach-gold').classList.remove('locked'); achieved++; }
+  if (total >= 20) { document.getElementById('ach-scholar').classList.remove('locked'); achieved++; }
+  document.getElementById('achievements-count').textContent = achieved + '/20 алынды';
+}
+
+// ===================== AI CHAT =====================
+function addMessage(role, text) {
+  const c = document.getElementById('chatMessages');
+  const d = document.createElement('div');
+  d.className = 'msg ' + role;
+  const isAI = role === 'ai';
+  const avatarContent = isAI ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg>` : 'АЖ';
+  d.innerHTML = `<div class="avatar sm">${avatarContent}</div><div class="msg-bubble">${text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function showTyping() {
+  const c = document.getElementById('chatMessages');
+  const d = document.createElement('div');
+  d.className = 'msg ai'; d.id = 'typingMsg';
+  d.innerHTML = `<div class="avatar sm"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg></div><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function removeTyping() { const t = document.getElementById('typingMsg'); if (t) t.remove(); }
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = ''; input.style.height = 'auto';
+  addMessage('user', text);
+  chatHistory.push({ role: 'user', content: text });
+  showTyping();
+  document.getElementById('sendBtn').disabled = true;
+
+  try {
+    const sysPrompt = `Сіз EduAI платформасының AI оқу көмекшісісіз. Оқушылардың сұрақтарына қазақ тілінде жауап беріңіз.
+
+Міндеттеріңіз:
+1. Жауапты тексеру — дұрыс/қате екенін айтыңыз
+2. Баға шығару — жауапқа 0-100% баға беріңіз
+3. Ұсыныс беру — тақырыпты жақсы меңгеру үшін кеңес беріңіз
+4. Қате табу — қателерді анықтап, түсіндіріңіз
+5. Мотивациялық пікір — оқушыны жігерлендіріңіз
+
+Жауаптарыңыз нақты, түсінікті, достық тонда болсын.`;
+    const messages = chatHistory.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
+    const resp = await fetch(CLAUDE_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: sysPrompt, messages }) });
+    const data = await resp.json();
+    removeTyping();
+    const reply = data.content?.[0]?.text || 'Кешіріңіз, қате болды. Қайтадан байқаңыз.';
+    addMessage('ai', reply);
+    chatHistory.push({ role: 'ai', content: reply });
+  } catch (e) {
+    removeTyping();
+    addMessage('ai', 'Интернет байланысы жоқ немесе қате болды. Қайтадан байқаңыз.');
+  }
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function quickAsk(text) { document.getElementById('chatInput').value = text; sendChat(); }
+
+function clearChat() {
+  chatHistory = [];
+  document.getElementById('chatMessages').innerHTML = `<div class="msg ai"><div class="avatar sm"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/><circle cx="7.5" cy="14.5" r="1.5"/><circle cx="16.5" cy="14.5" r="1.5"/></svg></div><div class="msg-bubble">Чат тазаланды. Жаңа сұрағыңызды қойыңыз! 😊</div></div>`;
+}
+
+function handleChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
+
+// ===================== UTILS =====================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function setStatPeriod(p, btn) {
+  document.querySelectorAll('[onclick^="setStatPeriod"]').forEach(b => { b.className = 'btn btn-outline btn-sm'; });
+  btn.className = 'btn btn-primary btn-sm';
+  showToast(p === 'week' ? 'Апталық көрсеткіш' : p === 'month' ? 'Айлық көрсеткіш' : 'Барлық уақыт');
+}
+
+function initApp() {
+  updateDashboard();
+  updateStats();
+  // Feedback бетін алдын ала дайындаймыз (бос күй)
+  document.getElementById('feedbackEmpty').style.display = 'block';
+  document.getElementById('feedbackContent').style.display = 'none';
+}
+</script>
+</body>
+</html>
